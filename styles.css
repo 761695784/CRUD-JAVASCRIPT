@@ -1,4 +1,7 @@
-
+.titre {
+margin: auto;
+text-align: center !important;
+}
 .error {
     color: red;
   }
