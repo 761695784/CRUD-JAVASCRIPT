@@ -207,8 +207,8 @@ document.querySelector("#ideelist").addEventListener("click", (event) => {
     if (event.target.classList.contains("approve-btn")) {
         // Sélectionne l'élément parent contenant l'idée.
         const card = event.target.closest(".card"); 
-        // Ajoute les classes CSS pour indiquer l'approbation.
-        card.classList.add("bg-success", "text-white"); 
+          // Ajoute la bordure verte.
+          card.style.border = "15px solid green"; 
         // Désactive le bouton d'approbation.
         event.target.classList.add("disabled"); 
         // Désactive le bouton de désapprobation.
@@ -224,8 +224,8 @@ document.querySelector("#ideelist").addEventListener("click", (event) => {
     if (event.target.classList.contains("disapprove-btn")) {
         // Sélectionne l'élément parent contenant l'idée.
         const card = event.target.closest(".card"); 
-        // Ajoute les classes CSS pour indiquer la désapprobation.
-        card.classList.add("bg-danger", "text-white"); 
+        // Ajoute la bordure rouge.
+        card.style.border = "15px solid red"; 
         // Désactive le bouton de désapprobation.
         event.target.classList.add("disabled"); 
         // Désactive le bouton d'approbation.
