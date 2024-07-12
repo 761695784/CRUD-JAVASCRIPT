@@ -59,6 +59,57 @@ function escapeHTML(str) {
     });
 }
 
+// Fonction pour sauvegarder une idée dans le localStorage
+function saveIdeaToLocalStorage(libelle, categorie, description) {
+    // Récupère les idées existantes depuis le localStorage ou initialise un tableau vide s'il n'y en a pas.
+    let ideas = JSON.parse(localStorage.getItem("ideas")) || [];
+    // Ajoute la nouvelle idée au tableau des idées.
+    ideas.push({ libelle, categorie, description });
+    // Sauvegarde le tableau mis à jour dans le localStorage.
+    localStorage.setItem("ideas", JSON.stringify(ideas));
+}
+
+// Fonction pour charger les idées depuis le localStorage
+function loadIdeasFromLocalStorage() {
+    // Récupère les idées depuis le localStorage.
+    let ideas = JSON.parse(localStorage.getItem("ideas")) || [];
+    // Sélectionne l'élément de la liste des idées.
+    const list = document.querySelector("#ideelist");
+    // Pour chaque idée, crée un élément et l'ajoute à la liste.
+    ideas.forEach(idea => {
+        const col = document.createElement("div");
+        col.className = "col-md-4 mb-4";
+        col.innerHTML = `
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">${idea.libelle}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">${idea.categorie}</h6>
+                    <p class="card-text">${idea.description}</p>
+                    <a href="#" class="btn btn-success btn-sm approve-btn">Approuver</a>
+                    <a href="#" class="btn btn-warning btn-sm disapprove-btn">Inapprouver</a>
+                    <a href="#" class="btn btn-danger btn-sm delete-btn">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                </div>
+            </div>
+        `;
+        list.appendChild(col);
+    });
+}
+
+// Fonction pour supprimer une idée du localStorage
+function deleteIdeaFromLocalStorage(libelle) {
+    // Récupère les idées depuis le localStorage.
+    let ideas = JSON.parse(localStorage.getItem("ideas")) || [];
+    // Filtre les idées pour supprimer celle qui correspond au libelle donné.
+    ideas = ideas.filter(idea => idea.libelle !== libelle);
+    // Sauvegarde le tableau mis à jour dans le localStorage.
+    localStorage.setItem("ideas", JSON.stringify(ideas));
+}
+
+// Charge les idées depuis le localStorage lorsque la page est chargée
+document.addEventListener("DOMContentLoaded", loadIdeasFromLocalStorage);
+
 // Ajout d'une idée
 document.querySelector("#myForm").addEventListener("submit", (event) => {
     // Empêche le comportement par défaut du formulaire (soumission de la page).
@@ -89,7 +140,7 @@ document.querySelector("#myForm").addEventListener("submit", (event) => {
             isValid = false;
         }
         // Valide la longueur de la description.
-        if (!validateLength(description, 5, 255)) {
+        if (!validateLength(description, 10, 5000)) {
             // Affiche un message d'erreur si la validation échoue.
             showAlert("La description doit avoir entre 10 et 5000 caractères", "#descriptionError"); 
             // Met à jour la variable de validation à false.
@@ -122,6 +173,8 @@ document.querySelector("#myForm").addEventListener("submit", (event) => {
         `;
         // Ajoute la nouvelle idée à la liste.
         list.appendChild(col); 
+        // Sauvegarde l'idée dans le localStorage.
+        saveIdeaToLocalStorage(libelle, categorie, description);
         // Affiche un message de succès.
         showSuccessMessage("L'idée a été ajoutée avec succès"); 
         // Efface les champs du formulaire.
@@ -135,8 +188,14 @@ document.querySelector("#myForm").addEventListener("submit", (event) => {
 document.querySelector("#ideelist").addEventListener("click", (event) => {
     // Vérifie si l'élément cliqué est un bouton de suppression ou une icône de suppression.
     if (event.target.classList.contains("delete-btn") || event.target.classList.contains("fa-trash")) {
+        // Sélectionne l'élément contenant l'idée à supprimer.
+        const card = event.target.closest(".card");
+        // Récupère le libellé de l'idée à supprimer.
+        const libelle = card.querySelector(".card-title").textContent;
         // Supprime la colonne contenant l'idée.
         event.target.closest(".col-md-4").remove(); 
+        // Supprime l'idée du localStorage.
+        deleteIdeaFromLocalStorage(libelle);
         // Affiche un message de succès.
         showSuccessMessage("Idée supprimée"); 
     }
