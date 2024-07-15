@@ -1,3 +1,6 @@
+// Catégories autorisées
+const validCategories = ["Sport", "Politique", "Santé", "Education"];
+
 // Variable pour stocker la ligne sélectionnée dans le formulaire
 var selectedrow = null;
 
@@ -152,10 +155,11 @@ document.querySelector("#myForm").addEventListener("submit", (event) => {
     } 
     // Valide la catégorie
     else {
-        if (categorie === "") {
-            showAlert("Veuillez sélectionner une catégorie", "#categorieError");
-            isValid = false;
-        }
+                // Validation de la catégorie
+            if (!validCategories.includes(categorie)) {
+                showAlert("Catégorie invalide", "#categorieError");
+                isValid = false;
+            }
         // Valide la longueur de la description
         if (!validateLength(description, 10, 5000)) {
             showAlert("La description doit avoir entre 10 et 5000 caractères", "#descriptionError");
