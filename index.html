@@ -58,90 +58,290 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   <script type="module">
-    // Import the functions you need from the SDKs you need
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
-    // TODO: Add SDKs for Firebase products that you want to use
-    // https://firebase.google.com/docs/web/setup#available-libraries
-  
-    // Your web app's Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyBvbwnzI1IvY-1UkQeK7LwxYzZRZRBEGmo",
-      authDomain: "majeli-1112.firebaseapp.com",
-      databaseURL: "https://majeli-1112-default-rtdb.firebaseio.com",
-      projectId: "majeli-1112",
-      storageBucket: "majeli-1112.appspot.com",
-      messagingSenderId: "51721650054",
-      appId: "1:51721650054:web:aae7b2931245368632f607"
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBvbwnzI1IvY-1UkQeK7LwxYzZRZRBEGmo",
+  authDomain: "majeli-1112.firebaseapp.com",
+  databaseURL: "https://majeli-1112-default-rtdb.firebaseio.com",
+  projectId: "majeli-1112",
+  storageBucket: "majeli-1112.appspot.com",
+  messagingSenderId: "51721650054",
+  appId: "1:51721650054:web:aae7b2931245368632f607"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+import { getDatabase, ref, set, child, get } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
+const db = getDatabase();
+
+// Références aux éléments du DOM
+const categorie = document.getElementById("categorie");
+const libelle = document.getElementById("libelle");
+const description = document.getElementById("description");
+const form = document.getElementById("myForm");
+const insbtn = document.getElementById("Insbtn");
+const successMessage = document.getElementById("successMessage");
+const ideelist = document.getElementById("ideelist");
+
+// Catégories autorisées
+const validCategories = ["Sport", "Politique", "Santé", "Education"];
+
+// Fonction pour afficher une alerte sous le champ concerné
+function showAlert(message, element) {
+  const errorElement = document.querySelector(element);
+  errorElement.textContent = message;
+  setTimeout(() => errorElement.textContent = "", 2000);
+}
+
+// Fonction pour afficher un message de succès
+function showSuccessMessage(message) {
+  successMessage.textContent = message;
+  successMessage.style.display = "block";
+  setTimeout(() => successMessage.style.display = "none", 3000);
+}
+
+// Fonction pour valider la longueur d'une chaîne de caractères
+function validateLength(input, min, max) {
+  const value = input.trim();
+  return value.length >= min && value.length <= max;
+}
+
+// Fonction pour échapper les caractères spéciaux (prévention des scripts)
+function escapeHTML(str) {
+  return str.replace(/[&<>"'\/]/g, function (s) {
+    const entityMap = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+      '/': '&#x2F;'
     };
-  
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    import { getDatabase, ref, set, child, get } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-database.js";
-    const db = getDatabase();
+    return entityMap[s];
+  });
+}
 
-    // Références aux éléments du DOM
-    const categorie = document.getElementById("categorie");
-    const libelle = document.getElementById("libelle");
-    const description = document.getElementById("description");
-    const form = document.getElementById("myForm");
-    const insbtn = document.getElementById("Insbtn");
-    const successMessage = document.getElementById("successMessage");
-    const ideelist = document.getElementById("ideelist");
+// Fonction pour insérer des données
+function insert(event) {
+  event.preventDefault();
 
-    // Fonction pour insérer des données
-    function insert(event) {
-      event.preventDefault();
-      const ideaRef = ref(db, "idees/" + libelle.value);
+  // Échappe les valeurs des champs
+  const escapedLibelle = escapeHTML(libelle.value);
+  const escapedCategorie = escapeHTML(categorie.value);
+  const escapedDescription = escapeHTML(description.value);
 
-      set(ideaRef, {
-        libelle: libelle.value,
-        categorie: categorie.value,
-        description: description.value
-      })
+  // Validation des champs
+  let isValid = true;
+
+  if (!validateLength(escapedLibelle, 3, 40)) {
+    showAlert("Le libellé doit avoir entre 3 et 40 caractères", "#libelleError");
+    isValid = false;
+  }
+
+  if (!validCategories.includes(escapedCategorie)) {
+    showAlert("Catégorie invalide", "#categorieError");
+    isValid = false;
+  }
+
+  if (!validateLength(escapedDescription, 10, 255)) {
+    showAlert("La description doit avoir entre 10 et 255 caractères", "#descriptionError");
+    isValid = false;
+  }
+
+  if (isValid) {
+    const ideaRef = ref(db, "idees/" + escapedLibelle);
+
+    set(ideaRef, {
+      libelle: escapedLibelle,
+      categorie: escapedCategorie,
+      description: escapedDescription
+    })
+    .then(() => {
+      showSuccessMessage("L'idée a été ajoutée avec succès");
+      form.reset();
+      displayIdeas();  // Rafraîchir l'affichage des idées
+    })
+    .catch((error) => {
+      alert("Échec de l'ajout : ", error);
+    });
+  }
+}
+
+// Fonction pour afficher les idées depuis Firebase avec gestion des statuts visuels
+function displayIdeas() {
+    const ideasRef = ref(db, "idees/");
+    get(ideasRef)
+        .then((snapshot) => {
+            if (snapshot.exists()) {
+                const ideas = snapshot.val();
+                ideelist.innerHTML = ""; // Efface le contenu précédent
+                let row = document.createElement("div");
+                row.className = "row row-cols-1 row-cols-md-4 g-4";
+                let count = 0;
+                for (let key in ideas) {
+                    if (ideas.hasOwnProperty(key)) {
+                        const idea = ideas[key];
+                        // Définition de la classe CSS basée sur le statut
+                        let borderClass = "";
+                        if (idea.status === 'approved') {
+                            borderClass = "border-success";
+                        } else if (idea.status === 'disapproved') {
+                            borderClass = "border-danger";
+                        }
+                        // Création de la carte d'idée
+                        let card = `
+                            <div class="col mb-4">
+                                <div class="card ${borderClass}">
+                                    <div class="card-body">
+                                        <h5 class="card-title">${idea.libelle}</h5>
+                                        <h6 class="card-subtitle mb-2 text-muted">${idea.categorie}</h6>
+                                        <p class="card-text">${idea.description}</p>
+                                        <a href="#" class="btn btn-success btn-sm approve-btn ${idea.status === 'approved' ? 'disabled' : ''}">Approuver</a>
+                                        <a href="#" class="btn btn-warning btn-sm disapprove-btn ${idea.status === 'disapproved' ? 'disabled' : ''}">Inapprouver</a>
+                                        <a href="#" class="btn btn-danger btn-sm delete-btn">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>`;
+                        // Ajouter la carte à la ligne
+                        row.innerHTML += card;
+                        count++;
+                        // Si on atteint 4 cartes, ajouter la ligne à ideelist et réinitialiser row
+                        if (count === 4) {
+                            ideelist.appendChild(row);
+                            row = document.createElement("div");
+                            row.className = "row row-cols-1 row-cols-md-4 g-4";
+                            count = 0;
+                        }
+                    }
+                }
+                // Ajouter la dernière ligne s'il reste des cartes à ajouter
+                if (count > 0) {
+                    ideelist.appendChild(row);
+                }
+            } else {
+                ideelist.innerHTML = "<p>Aucune idée trouvée</p>";
+            }
+        })
+        .catch((error) => {
+            console.error("Erreur lors de la récupération des idées :", error);
+        });
+}
+
+
+
+// Ajouter des écouteurs d'événements
+insbtn.addEventListener("click", insert);
+
+// Afficher les idées au chargement de la page
+displayIdeas();
+
+// Fonction pour supprimer une idée
+function deleteIdea(key) {
+  const ideaRef = ref(db, "idees/" + key);
+
+  // Demande de confirmation avant la suppression
+  if (confirm("Êtes-vous sûr de vouloir supprimer cette idée ?")) {
+    // Supprimer l'idée de la base de données
+    set(ideaRef, null)
       .then(() => {
-        successMessage.innerHTML = "L'idée a été ajoutée avec succès";
-        successMessage.style.display = "block";
-        form.reset();
-        displayIdeas();  // Rafraîchir l'affichage des idées
+        showSuccessMessage("L'idée a été supprimée avec succès");
+        displayIdeas();  // Rafraîchir l'affichage des idées après la suppression
       })
       .catch((error) => {
-        alert("Échec de l'ajout : ", error);
+        showAlert("Erreur lors de la suppression de l'idée : " + error, "#errorAlert");
       });
+  }
+}
+
+// Approuver une idée
+document.querySelector("#ideelist").addEventListener("click", (event) => {
+    // Vérifie si l'élément cliqué est un bouton d'approbation
+    if (event.target.classList.contains("approve-btn")) {
+        // Sélectionne la carte contenant l'idée
+        const card = event.target.closest(".card");
+        // Récupère le libellé de l'idée à approuver
+        const libelle = card.querySelector(".card-title").textContent;
+        // Ajoute une bordure verte à la carte
+        card.style.border = "15px solid green";
+        // Désactive les boutons d'approbation et de désapprobation
+        event.target.classList.add("disabled");
+        card.querySelector(".disapprove-btn").classList.add("disabled");
+        // Met à jour le statut de l'idée dans le localStorage
+        updateIdeaStatusInLocalStorage(libelle, "approved");
+        // Affiche un message de succès
+        showSuccessMessage("Idée approuvée");
     }
+});
 
-    // Fonction pour afficher les idées
-    function displayIdeas() {
-      const ideasRef = ref(db, "idees/");
-      get(ideasRef).then((snapshot) => {
-        if (snapshot.exists()) {
-          const ideas = snapshot.val();
-          ideelist.innerHTML = "";
-          for (let key in ideas) {
-            if (ideas.hasOwnProperty(key)) {
-              const idea = ideas[key];
-              ideelist.innerHTML += `
-                <div class="card mb-3">
-                  <div class="card-body">
-                    <h5 class="card-title">${idea.libelle}</h5>
-                    <p class="card-text">${idea.categorie}</p>
-                    <p class="card-text">${idea.description}</p>
-                  </div>
-                </div>`;
-            }
-          }
-        } else {
-          ideelist.innerHTML = "<p>Aucune idée trouvée</p>";
-        }
-      }).catch((error) => {
-        console.error("Erreur lors de la récupération des idées : ", error);
-      });
+// Désapprouver une idée
+document.querySelector("#ideelist").addEventListener("click", (event) => {
+    // Vérifie si l'élément cliqué est un bouton de désapprobation
+    if (event.target.classList.contains("disapprove-btn")) {
+        // Sélectionne la carte contenant l'idée
+        const card = event.target.closest(".card");
+        // Récupère le libellé de l'idée à désapprouver
+        const libelle = card.querySelector(".card-title").textContent;
+        // Ajoute une bordure rouge à la carte
+        card.style.border = "15px solid red";
+        // Désactive les boutons d'approbation et de désapprobation
+        event.target.classList.add("disabled");
+        card.querySelector(".approve-btn").classList.add("disabled");
+        // Met à jour le statut de l'idée dans le localStorage
+        updateIdeaStatusInLocalStorage(libelle, "disapproved");
+        // Affiche un message de succès
+        showSuccessMessage("Idée inapprouvée");
     }
-
-    // Ajouter des écouteurs d'événements
-    insbtn.addEventListener("click", insert);
-
-    // Afficher les idées au chargement de la page
+});
+// Charge les idées depuis Firebase lorsque la page est chargée
+document.addEventListener("DOMContentLoaded", () => {
     displayIdeas();
+});
+// Approuver une idée
+document.querySelector("#ideelist").addEventListener("click", (event) => {
+    if (event.target.classList.contains("approve-btn")) {
+        const card = event.target.closest(".card");
+        const libelle = card.querySelector(".card-title").textContent;
+        card.style.border = "15px solid green";
+        event.target.classList.add("disabled");
+        card.querySelector(".disapprove-btn").classList.add("disabled");
+        updateIdeaStatusInFirebase(libelle, "approved");
+        showSuccessMessage("Idée approuvée");
+    }
+});
+
+// Désapprouver une idée
+document.querySelector("#ideelist").addEventListener("click", (event) => {
+    if (event.target.classList.contains("disapprove-btn")) {
+        const card = event.target.closest(".card");
+        const libelle = card.querySelector(".card-title").textContent;
+        card.style.border = "15px solid red";
+        event.target.classList.add("disabled");
+        card.querySelector(".approve-btn").classList.add("disabled");
+        updateIdeaStatusInFirebase(libelle, "disapproved");
+        showSuccessMessage("Idée inapprouvée");
+    }
+});
+
+// Fonction pour mettre à jour le statut d'une idée dans Firebase
+function updateIdeaStatusInFirebase(libelle, status) {
+    const ideaRef = ref(db, `idees/${libelle}`);
+    set(ideaRef, { status }, { merge: true })
+        .then(() => {
+            // Succès de la mise à jour
+            console.log(`Statut de l'idée '${libelle}' mis à jour : ${status}`);
+        })
+        .catch((error) => {
+            console.error("Erreur lors de la mise à jour du statut de l'idée :", error);
+        });
+}
+
 
   </script>
 </body>

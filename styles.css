@@ -19,6 +19,13 @@ text-align: center !important;
     
   
   }
+  .border-success {
+    border: 12px solid green;
+}
+
+.border-danger {
+    border: 12px solid red;
+}
 
   #myForm label {
     font-weight: bold;
