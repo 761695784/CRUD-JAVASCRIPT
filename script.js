@@ -1,51 +1,49 @@
-var selectedrow = null; 
-// Initialise la variable selectedrow à null pour suivre la ligne sélectionnée.
+// Variable pour stocker la ligne sélectionnée dans le formulaire
+var selectedrow = null;
 
 // Fonction pour afficher une alerte sous le champ concerné
 function showAlert(message, element) {
-    // Sélectionne l'élément DOM où l'alerte sera affichée.
-    const errorElement = document.querySelector(element); 
-    // Définit le message d'alerte comme le texte de l'élément sélectionné.
-    errorElement.textContent = message; 
-    // Efface le message d'alerte après 2 secondes.
-    setTimeout(() => errorElement.textContent = "", 2000); 
+    // Sélectionne l'élément pour afficher le message d'erreur
+    const errorElement = document.querySelector(element);
+    // Affiche le message d'erreur
+    errorElement.textContent = message;
+    // Efface le message après 2 secondes
+    setTimeout(() => errorElement.textContent = "", 2000);
 }
 
 // Fonction pour afficher un message de succès
 function showSuccessMessage(message) {
-    // Sélectionne l'élément DOM pour le message de succès.
-    const successMessageElement = document.querySelector("#successMessage"); 
-    // Définit le message de succès comme le texte de l'élément sélectionné.
-    successMessageElement.textContent = message; 
-    // Affiche l'élément du message de succès.
-    successMessageElement.style.display = "block"; 
-    // Cache le message de succès après 3 secondes.
-    setTimeout(() => successMessageElement.style.display = "none", 3000); 
+    // Sélectionne l'élément pour afficher le message de succès
+    const successMessageElement = document.querySelector("#successMessage");
+    // Affiche le message de succès
+    successMessageElement.textContent = message;
+    // Affiche le message de succès pendant 3 secondes
+    successMessageElement.style.display = "block";
+    setTimeout(() => successMessageElement.style.display = "none", 3000);
 }
 
 // Fonction pour effacer tous les champs du formulaire
 function clearField() {
-    // Réinitialise la valeur du champ libelle à une chaîne vide.
-    document.querySelector("#libelle").value = ""; 
-    // Réinitialise la valeur du champ categorie à une chaîne vide.
-    document.querySelector("#categorie").value = ""; 
-    // Réinitialise la valeur du champ description à une chaîne vide.
-    document.querySelector("#description").value = ""; 
+    // Efface le champ du libellé
+    document.querySelector("#libelle").value = "";
+    // Efface le champ de la catégorie
+    document.querySelector("#categorie").value = "";
+    // Efface le champ de la description
+    document.querySelector("#description").value = "";
 }
 
 // Fonction pour valider la longueur d'une chaîne de caractères
 function validateLength(input, min, max) {
-    // Supprime les espaces au début et à la fin de la chaîne de caractères.
-    const value = input.trim(); 
-    // Vérifie si la longueur de la chaîne de caractères est comprise entre min et max.
-    return value.length >= min && value.length <= max; 
+    // Supprime les espaces en début et fin de chaîne
+    const value = input.trim();
+    // Vérifie si la longueur est comprise entre les valeurs min et max
+    return value.length >= min && value.length <= max;
 }
 
 // Fonction pour échapper les caractères spéciaux (prévention des scripts)
 function escapeHTML(str) {
-    // Remplace les caractères spéciaux par leurs entités HTML.
+    // Remplace les caractères spéciaux par leurs entités HTML
     return str.replace(/[&<>"'\/]/g, function (s) {
-        // Dictionnaire de mappage des caractères spéciaux vers leurs entités HTML.
         const entityMap = {
             '&': '&amp;',
             '<': '&lt;',
@@ -54,29 +52,29 @@ function escapeHTML(str) {
             "'": '&#39;',
             '/': '&#x2F;'
         };
-        // Retourne l'entité HTML correspondante au caractère spécial.
         return entityMap[s];
     });
 }
 
 // Fonction pour sauvegarder une idée dans le localStorage
-function saveIdeaToLocalStorage(libelle, categorie, description) {
-    // Récupère les idées existantes depuis le localStorage ou initialise un tableau vide s'il n'y en a pas.
+function saveIdeaToLocalStorage(libelle, categorie, description, status) {
+    // Récupère les idées existantes dans le localStorage ou initialise un tableau vide
     let ideas = JSON.parse(localStorage.getItem("ideas")) || [];
-    // Ajoute la nouvelle idée au tableau des idées.
-    ideas.push({ libelle, categorie, description });
-    // Sauvegarde le tableau mis à jour dans le localStorage.
+    // Ajoute la nouvelle idée avec son statut
+    ideas.push({ libelle, categorie, description, status });
+    // Sauvegarde le tableau d'idées dans le localStorage
     localStorage.setItem("ideas", JSON.stringify(ideas));
 }
 
 // Fonction pour charger les idées depuis le localStorage
 function loadIdeasFromLocalStorage() {
-    // Récupère les idées depuis le localStorage.
+    // Récupère les idées depuis le localStorage ou initialise un tableau vide
     let ideas = JSON.parse(localStorage.getItem("ideas")) || [];
-    // Sélectionne l'élément de la liste des idées.
+    // Sélectionne l'élément pour afficher les idées
     const list = document.querySelector("#ideelist");
-    // Pour chaque idée, crée un élément et l'ajoute à la liste.
+    // Parcourt chaque idée et l'ajoute à la liste
     ideas.forEach(idea => {
+        // Crée un nouvel élément div pour l'idée
         const col = document.createElement("div");
         col.className = "col-md-4 mb-4";
         col.innerHTML = `
@@ -85,25 +83,49 @@ function loadIdeasFromLocalStorage() {
                     <h5 class="card-title">${idea.libelle}</h5>
                     <h6 class="card-subtitle mb-2 text-muted">${idea.categorie}</h6>
                     <p class="card-text">${idea.description}</p>
-                    <a href="#" class="btn btn-success btn-sm approve-btn">Approuver</a>
-                    <a href="#" class="btn btn-warning btn-sm disapprove-btn">Inapprouver</a>
+                    <a href="#" class="btn btn-success btn-sm approve-btn ${idea.status === 'approved' ? 'disabled' : ''}">Approuver</a>
+                    <a href="#" class="btn btn-warning btn-sm disapprove-btn ${idea.status === 'disapproved' ? 'disabled' : ''}">Inapprouver</a>
                     <a href="#" class="btn btn-danger btn-sm delete-btn">
                         <i class="fas fa-trash"></i>
                     </a>
                 </div>
             </div>
         `;
+        // Ajoute une bordure verte si l'idée est approuvée
+        if (idea.status === 'approved') {
+            col.querySelector('.card').style.border = "15px solid green";
+        } 
+        // Ajoute une bordure rouge si l'idée est désapprouvée
+        else if (idea.status === 'disapproved') {
+            col.querySelector('.card').style.border = "15px solid red";
+        }
+        // Ajoute l'idée à la liste
         list.appendChild(col);
     });
 }
 
+// Fonction pour mettre à jour le statut d'une idée dans le localStorage
+function updateIdeaStatusInLocalStorage(libelle, status) {
+    // Récupère les idées depuis le localStorage
+    let ideas = JSON.parse(localStorage.getItem("ideas")) || [];
+    // Met à jour le statut de l'idée correspondante
+    ideas = ideas.map(idea => {
+        if (idea.libelle === libelle) {
+            idea.status = status;
+        }
+        return idea;
+    });
+    // Sauvegarde les idées mises à jour dans le localStorage
+    localStorage.setItem("ideas", JSON.stringify(ideas));
+}
+
 // Fonction pour supprimer une idée du localStorage
 function deleteIdeaFromLocalStorage(libelle) {
-    // Récupère les idées depuis le localStorage.
+    // Récupère les idées depuis le localStorage
     let ideas = JSON.parse(localStorage.getItem("ideas")) || [];
-    // Filtre les idées pour supprimer celle qui correspond au libelle donné.
+    // Filtre et supprime l'idée correspondante
     ideas = ideas.filter(idea => idea.libelle !== libelle);
-    // Sauvegarde le tableau mis à jour dans le localStorage.
+    // Sauvegarde les idées mises à jour dans le localStorage
     localStorage.setItem("ideas", JSON.stringify(ideas));
 }
 
@@ -112,51 +134,42 @@ document.addEventListener("DOMContentLoaded", loadIdeasFromLocalStorage);
 
 // Ajout d'une idée
 document.querySelector("#myForm").addEventListener("submit", (event) => {
-    // Empêche le comportement par défaut du formulaire (soumission de la page).
+    // Empêche l'envoi du formulaire
     event.preventDefault();
 
-    // Échappe les caractères spéciaux et récupère la valeur du champ libelle.
-    const libelle = escapeHTML(document.querySelector("#libelle").value); 
-    // Échappe les caractères spéciaux et récupère la valeur du champ categorie.
-    const categorie = escapeHTML(document.querySelector("#categorie").value); 
-    // Échappe les caractères spéciaux et récupère la valeur du champ description.
-    const description = escapeHTML(document.querySelector("#description").value); 
+    // Récupère et échappe les valeurs des champs du formulaire
+    const libelle = escapeHTML(document.querySelector("#libelle").value);
+    const categorie = escapeHTML(document.querySelector("#categorie").value);
+    const description = escapeHTML(document.querySelector("#description").value);
 
-    // Initialise une variable de validation à true.
+    // Variable pour vérifier la validité du formulaire
     let isValid = true;
 
-    // Valide la longueur du libelle.
+    // Valide la longueur du libellé
     if (!validateLength(libelle, 5, 100)) {
-        // Affiche un message d'erreur si la validation échoue.
-        showAlert("Le libellé doit avoir entre 5 et 100 caractères", "#libelleError"); 
-        // Met à jour la variable de validation à false.
+        showAlert("Le libellé doit avoir entre 5 et 100 caractères", "#libelleError");
         isValid = false;
-    } else {
-        // Valide que la catégorie n'est pas vide.
+    } 
+    // Valide la catégorie
+    else {
         if (categorie === "") {
-            // Affiche un message d'erreur si la validation échoue.
-            showAlert("Veuillez sélectionner une catégorie", "#categorieError"); 
-            // Met à jour la variable de validation à false.
+            showAlert("Veuillez sélectionner une catégorie", "#categorieError");
             isValid = false;
         }
-        // Valide la longueur de la description.
+        // Valide la longueur de la description
         if (!validateLength(description, 10, 5000)) {
-            // Affiche un message d'erreur si la validation échoue.
-            showAlert("La description doit avoir entre 10 et 5000 caractères", "#descriptionError"); 
-            // Met à jour la variable de validation à false.
+            showAlert("La description doit avoir entre 10 et 5000 caractères", "#descriptionError");
             isValid = false;
         }
     }
 
-    // Si toutes les validations ont réussi.
+    // Si le formulaire est valide, ajoute l'idée à la liste
     if (isValid) {
-        // Sélectionne l'élément de la liste des idées.
-        const list = document.querySelector("#ideelist"); 
-        // Crée un nouvel élément div pour la nouvelle idée.
-        const col = document.createElement("div"); 
-        // Définit les classes CSS de la nouvelle idée.
-        col.className = "col-md-4 mb-4"; 
-        // Définit le contenu HTML de la nouvelle idée.
+        // Sélectionne l'élément pour afficher les idées
+        const list = document.querySelector("#ideelist");
+        // Crée un nouvel élément div pour l'idée
+        const col = document.createElement("div");
+        col.className = "col-md-4 mb-4";
         col.innerHTML = `
             <div class="card">
                 <div class="card-body">
@@ -171,66 +184,72 @@ document.querySelector("#myForm").addEventListener("submit", (event) => {
                 </div>
             </div>
         `;
-        // Ajoute la nouvelle idée à la liste.
-        list.appendChild(col); 
-        // Sauvegarde l'idée dans le localStorage.
-        saveIdeaToLocalStorage(libelle, categorie, description);
-        // Affiche un message de succès.
-        showSuccessMessage("L'idée a été ajoutée avec succès"); 
-        // Efface les champs du formulaire.
-        clearField(); 
-        // Réinitialise la variable selectedrow à null.
-        selectedrow = null; 
+        // Ajoute l'idée à la liste
+        list.appendChild(col);
+        // Sauvegarde l'idée dans le localStorage
+        saveIdeaToLocalStorage(libelle, categorie, description, "");
+        // Affiche un message de succès
+        showSuccessMessage("L'idée a été ajoutée avec succès");
+        // Efface les champs du formulaire
+        clearField();
+        // Réinitialise la variable selectedrow
+        selectedrow = null;
     }
 });
 
 // Suppression d'une idée
 document.querySelector("#ideelist").addEventListener("click", (event) => {
-    // Vérifie si l'élément cliqué est un bouton de suppression ou une icône de suppression.
+    // Vérifie si l'élément cliqué est un bouton de suppression ou une icône de suppression
     if (event.target.classList.contains("delete-btn") || event.target.classList.contains("fa-trash")) {
-        // Sélectionne l'élément contenant l'idée à supprimer.
+        // Sélectionne la carte contenant l'idée
         const card = event.target.closest(".card");
-        // Récupère le libellé de l'idée à supprimer.
+        // Récupère le libellé de l'idée à supprimer
         const libelle = card.querySelector(".card-title").textContent;
-        // Supprime la colonne contenant l'idée.
-        event.target.closest(".col-md-4").remove(); 
-        // Supprime l'idée du localStorage.
+        // Supprime la colonne contenant l'idée
+        event.target.closest(".col-md-4").remove();
+        // Supprime l'idée du localStorage
         deleteIdeaFromLocalStorage(libelle);
-        // Affiche un message de succès.
-        showSuccessMessage("Idée supprimée"); 
+        // Affiche un message de succès
+        showSuccessMessage("Idée supprimée");
     }
 });
 
 // Approuver une idée
 document.querySelector("#ideelist").addEventListener("click", (event) => {
-    // Vérifie si l'élément cliqué est un bouton d'approbation.
+    // Vérifie si l'élément cliqué est un bouton d'approbation
     if (event.target.classList.contains("approve-btn")) {
-        // Sélectionne l'élément parent contenant l'idée.
-        const card = event.target.closest(".card"); 
-          // Ajoute la bordure verte.
-          card.style.border = "15px solid green"; 
-        // Désactive le bouton d'approbation.
-        event.target.classList.add("disabled"); 
-        // Désactive le bouton de désapprobation.
-        card.querySelector(".disapprove-btn").classList.add("disabled"); 
-        // Affiche un message de succès.
-        showSuccessMessage("Idée approuvée"); 
+        // Sélectionne la carte contenant l'idée
+        const card = event.target.closest(".card");
+        // Récupère le libellé de l'idée à approuver
+        const libelle = card.querySelector(".card-title").textContent;
+        // Ajoute une bordure verte à la carte
+        card.style.border = "15px solid green";
+        // Désactive les boutons d'approbation et de désapprobation
+        event.target.classList.add("disabled");
+        card.querySelector(".disapprove-btn").classList.add("disabled");
+        // Met à jour le statut de l'idée dans le localStorage
+        updateIdeaStatusInLocalStorage(libelle, "approved");
+        // Affiche un message de succès
+        showSuccessMessage("Idée approuvée");
     }
 });
 
 // Désapprouver une idée
 document.querySelector("#ideelist").addEventListener("click", (event) => {
-    // Vérifie si l'élément cliqué est un bouton de désapprobation.
+    // Vérifie si l'élément cliqué est un bouton de désapprobation
     if (event.target.classList.contains("disapprove-btn")) {
-        // Sélectionne l'élément parent contenant l'idée.
-        const card = event.target.closest(".card"); 
-        // Ajoute la bordure rouge.
-        card.style.border = "15px solid red"; 
-        // Désactive le bouton de désapprobation.
-        event.target.classList.add("disabled"); 
-        // Désactive le bouton d'approbation.
-        card.querySelector(".approve-btn").classList.add("disabled"); 
-        // Affiche un message de succès.
-        showSuccessMessage("Idée inapprouvée"); 
+        // Sélectionne la carte contenant l'idée
+        const card = event.target.closest(".card");
+        // Récupère le libellé de l'idée à désapprouver
+        const libelle = card.querySelector(".card-title").textContent;
+        // Ajoute une bordure rouge à la carte
+        card.style.border = "15px solid red";
+        // Désactive les boutons d'approbation et de désapprobation
+        event.target.classList.add("disabled");
+        card.querySelector(".approve-btn").classList.add("disabled");
+        // Met à jour le statut de l'idée dans le localStorage
+        updateIdeaStatusInLocalStorage(libelle, "disapproved");
+        // Affiche un message de succès
+        showSuccessMessage("Idée inapprouvée");
     }
 });
