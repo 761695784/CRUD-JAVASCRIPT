@@ -106,12 +106,15 @@ function showSuccessMessage(message) {
 
 // Fonction pour valider la longueur d'une chaîne de caractères
 function validateLength(input, min, max) {
+  // On trim les espaces en début et fin de chaîne de caractères
   const value = input.trim();
+  // Vérifie si la longueur de la chaîne de caractères est comprise entre min et max
   return value.length >= min && value.length <= max;
 }
 
 // Fonction pour échapper les caractères spéciaux (prévention des scripts)
 function escapeHTML(str) {
+  // Remplace les caractères spéciaux par leurs équivalents HTML
   return str.replace(/[&<>"'\/]/g, function (s) {
     const entityMap = {
       '&': '&amp;',
@@ -158,6 +161,7 @@ function insert(event) {
 
   // Si tous les champs sont valides
   if (isValid) {
+    // Référence à l'emplacement de l'idée dans Firebase à partir du libellé
     const ideaRef = ref(db, "idees/" + escapedLibelle);
 
     // Ajoute l'idée à Firebase avec un statut initial "pending"
