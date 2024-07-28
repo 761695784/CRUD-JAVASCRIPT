@@ -186,34 +186,27 @@ function insert(event) {
   }
 }
 
-// Fonction pour afficher les idées depuis Firebase avec gestion des statuts visuels
 function displayIdeas() {
-  // Référence à l'emplacement des idées dans Firebase
   const ideasRef = ref(db, "idees/");
   get(ideasRef)
     .then((snapshot) => {
-      // Vérifie si des idées existent dans la base de données
       if (snapshot.exists()) {
         const ideas = snapshot.val();
         ideelist.innerHTML = ""; // Efface le contenu précédent
 
-        // Début de la construction des idées sous forme de cartes
         let row = document.createElement("div");
         row.className = "row row-cols-1 row-cols-md-4 g-4";
         let count = 0;
 
-        // Parcourt chaque idée et crée une carte pour chacune
         for (let key in ideas) {
           if (ideas.hasOwnProperty(key)) {
             const idea = ideas[key];
-            // Définition de la classe CSS basée sur le statut
             let borderClass = "";
             if (idea.statut === 'approved') {
               borderClass = "border-success";
             } else if (idea.statut === 'disapproved') {
               borderClass = "border-danger";
             }
-            // Création de la carte d'idée
             let card = `
               <div class="col mb-4">
                 <div class="card ${borderClass}">
@@ -229,10 +222,8 @@ function displayIdeas() {
                   </div>
                 </div>
               </div>`;
-            // Ajouter la carte à la ligne
             row.innerHTML += card;
             count++;
-            // Si on atteint 4 cartes, ajouter la ligne à ideelist et réinitialiser row
             if (count === 4) {
               ideelist.appendChild(row);
               row = document.createElement("div");
@@ -241,13 +232,12 @@ function displayIdeas() {
             }
           }
         }
-        // Ajouter la dernière ligne s'il reste des cartes à ajouter
         if (count > 0) {
           ideelist.appendChild(row);
         }
 
-        // Ajouter des écouteurs d'événements pour l'approbation, la désapprobation et la suppression
-        row.addEventListener('click', (event) => {
+        // Ajouter des écouteurs d'événements après avoir ajouté toutes les cartes
+        ideelist.addEventListener('click', (event) => {
           if (event.target.classList.contains('approve-btn')) {
             const libelle = event.target.dataset.libelle;
             updateStatus(libelle, 'approved');
@@ -263,7 +253,6 @@ function displayIdeas() {
         });
 
       } else {
-        // Affiche un message si aucune idée n'est trouvée
         ideelist.innerHTML = "<p>Aucune idée trouvée</p>";
       }
     })
@@ -271,6 +260,7 @@ function displayIdeas() {
       console.error("Erreur lors de la récupération des idées :", error);
     });
 }
+
 
 // Fonction pour supprimer une idée de Firebase
 function deleteIdeaFromFirebase(libelle) {
